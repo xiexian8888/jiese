@@ -3,55 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>行动日志 Vivid | 清新记录每一天</title>
+    <title>行动日志 Phoenix | 数据洞察版</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js" async></script>
 </head>
 <body>
-
-    <div id="preloader">
-        <div class="spinner"></div>
-    </div>
+    <div id="preloader"><div class="spinner"></div></div>
 
     <div class="container">
         <header>
-            <div class="title-bar">
-                <i class="ph-bold ph-leaf"></i>
-                <h1>行动日志 Vivid</h1>
-            </div>
+            <div class="title-bar"><i class="ph-bold ph-rocket-launch"></i><h1>行动日志 Phoenix</h1></div>
             <div class="theme-switcher">
                 <i class="ph ph-sun"></i>
                 <label class="switch"><input type="checkbox" id="theme-toggle"><span class="slider"></span></label>
                 <i class="ph ph-moon"></i>
             </div>
         </header>
-        <p class="subtitle" id="quote">"每一次呼吸，都是新的开始。"</p>
-        
+        <p class="subtitle" id="quote">"数据不会说谎，它照亮你前行的路。"</p>
+
         <main>
-            <div class="stats-grid">
-                <div class="stat-item"><h3>成功天数</h3><p><i class="ph-fill ph-check-circle"></i> <span id="total-success-days">0</span></p></div>
-                <div class="stat-item"><h3>成功率</h3><p><i class="ph-fill ph-chart-pie-slice"></i> <span id="success-rate">0</span>%</p></div>
-                <div class="stat-item"><h3>当前连胜</h3><p><i class="ph-fill ph-fire"></i> <span id="current-streak">0</span></p></div>
-                <div class="stat-item"><h3>最长连胜</h3><p><i class="ph-fill ph-trophy"></i> <span id="best-streak">0</span></p></div>
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="calendar"><i class="ph-bold ph-calendar-blank"></i> 日历视图</button>
+                <button class="tab-btn" data-tab="stats"><i class="ph-bold ph-chart-bar"></i> 统计图表</button>
+                <button class="tab-btn" data-tab="log"><i class="ph-bold ph-list-bullets"></i> 活动日志</button>
             </div>
 
-            <div class="actions">
-                <button id="log-day-btn"><i class="ph-bold ph-calendar-plus"></i> 记录今天</button>
-            </div>
-
-            <div class="calendar-container">
-                <div class="calendar-header">
-                    <button id="prev-month-btn"><i class="ph ph-caret-left"></i></button>
-                    <h2 id="calendar-month-year"></h2>
-                    <button id="next-month-btn"><i class="ph ph-caret-right"></i></button>
+            <div id="calendar-view" class="tab-content active">
+                <div class="stats-grid">
+                    <div class="stat-item"><h3>成功天数</h3><p><i class="ph-fill ph-check-circle"></i> <span id="total-success-days">0</span></p></div>
+                    <div class="stat-item"><h3>成功率</h3><p><i class="ph-fill ph-chart-pie-slice"></i> <span id="success-rate">0</span>%</p></div>
+                    <div class="stat-item"><h3>当前连胜</h3><p><i class="ph-fill ph-fire"></i> <span id="current-streak">0</span></p></div>
+                    <div class="stat-item"><h3>最长连胜</h3><p><i class="ph-fill ph-trophy"></i> <span id="best-streak">0</span></p></div>
                 </div>
-                <div class="calendar-grid" id="calendar-grid"></div>
+                <div class="actions">
+                    <button id="log-day-btn"><i class="ph-bold ph-pencil-simple-line"></i> 记录今天</button>
+                </div>
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <button id="prev-month-btn"><i class="ph ph-caret-left"></i></button>
+                        <h2 id="calendar-month-year"></h2>
+                        <button id="next-month-btn"><i class="ph ph-caret-right"></i></button>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid"></div>
+                </div>
             </div>
-            
+
+            <div id="stats-view" class="tab-content">
+                <div class="chart-wrapper">
+                    <h3>月度活动概览</h3>
+                    <canvas id="monthly-chart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>周趋势分析 (成功)</h3>
+                    <canvas id="weekday-chart"></canvas>
+                </div>
+            </div>
+
+            <div id="log-view" class="tab-content">
+                <div class="log-container">
+                    <table id="activity-log-table">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>状态</th>
+                                <th>笔记</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="data-management">
                 <button id="export-btn"><i class="ph ph-download-simple"></i> 导出</button>
                 <button id="import-btn"><i class="ph ph-upload-simple"></i> 导入</button>
@@ -62,7 +89,7 @@
 
     <div id="choice-modal" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3>今天表现如何？</h3>
+            <h3>今天结果如何？</h3>
             <div class="choice-actions">
                 <button id="success-btn"><i class="ph-fill ph-check-circle"></i> 成功</button>
                 <button id="failure-btn"><i class="ph-fill ph-x-circle"></i> 失败</button>
@@ -70,16 +97,15 @@
             <button class="close-btn" data-modal-id="choice-modal"><i class="ph ph-x"></i></button>
         </div>
     </div>
-
     <div id="note-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h3 id="modal-title">记录一下</h3>
-            <textarea id="note-textarea" placeholder="是什么让你成功，又是什么导致了失败？记录下来，下次做得更好..."></textarea>
-            <div class="modal-actions">
-                <button id="save-note-btn">保存记录</button>
-            </div>
+            <textarea id="note-textarea" placeholder="记录想法，助力下一次成功..."></textarea>
+            <div class="modal-actions"><button id="save-note-btn">保存记录</button></div>
             <button class="close-btn" data-modal-id="note-modal"><i class="ph ph-x"></i></button>
         </div>
     </div>
+    
+    <script src="script.js" defer></script>
 </body>
 </html>
