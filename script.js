@@ -1,185 +1,225 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM 元素 ---
     const elements = {
-        quote: document.getElementById('quote'),
-        totalDays: document.getElementById('total-days'),
-        currentStreak: document.getElementById('current-streak'),
-        bestStreak: document.getElementById('best-streak'),
-        checkInBtn: document.getElementById('check-in-btn'),
-        calendarMonthYear: document.getElementById('calendar-month-year'),
-        calendarGrid: document.getElementById('calendar-grid'),
-        prevMonthBtn: document.getElementById('prev-month-btn'),
-        nextMonthBtn: document.getElementById('next-month-btn'),
-        resetDataBtn: document.getElementById('reset-data-btn'),
+        preloader: document.getElementById('preloader'),
+        container: document.querySelector('.container'),
+        // ... (其他元素与上一版类似，但为简洁省略，将在函数中直接使用)
     };
 
     // --- 状态与数据 ---
-    const storageKeys = {
-        checkIns: 'checkInApp_checkIns',
-        bestStreak: 'checkInApp_bestStreak'
+    const storageKeys = { data: 'checkInVivid_data', theme: 'checkInVivid_theme' };
+    let state = {
+        checkIns: {}, // 数据结构: { 'YYYY-MM-DD': { status: 'success' | 'failure', note: '...' } }
+        bestStreak: 0,
     };
-    let checkIns = JSON.parse(localStorage.getItem(storageKeys.checkIns)) || [];
-    let currentDate = new Date(); // 用于日历导航
+    let currentDate = new Date();
+    let modalTarget = { date: null, status: null };
 
-    // --- 功能函数 ---
+    // --- 初始化函数 ---
+    const init = () => {
+        // 加载动画
+        setTimeout(() => {
+            elements.preloader.style.opacity = '0';
+            elements.container.style.opacity = '1';
+            setTimeout(() => elements.preloader.style.display = 'none', 500);
+        }, 500);
 
-    /**
-     * 将日期对象转换为 'YYYY-MM-DD' 格式的字符串
-     * @param {Date} date - 日期对象
-     * @returns {string}
-     */
+        loadState();
+        initTheme();
+        updateUI();
+        addEventListeners();
+    };
+    
+    // --- 数据处理 ---
     const toISODateString = (date) => date.toISOString().split('T')[0];
-
-    /**
-     * 保存数据到 localStorage
-     */
-    const saveData = () => {
-        localStorage.setItem(storageKeys.checkIns, JSON.stringify(checkIns));
+    const saveState = () => localStorage.setItem(storageKeys.data, JSON.stringify(state));
+    const loadState = () => {
+        const savedData = localStorage.getItem(storageKeys.data);
+        if (savedData) state = JSON.parse(savedData);
     };
 
-    /**
-     * 计算并更新统计数据
-     */
-    const updateStats = () => {
-        // 1. 总打卡天数
-        elements.totalDays.textContent = checkIns.length;
-
-        // 2. 计算连续天数
-        let currentStreak = 0;
-        if (checkIns.length > 0) {
-            const sortedCheckIns = [...checkIns].sort().reverse();
-            const today = new Date();
-            const yesterday = new Date();
-            yesterday.setDate(today.getDate() - 1);
-
-            // 检查今天是否打卡，或者昨天是否打卡，以确定连续的起点
-            if (sortedCheckIns[0] === toISODateString(today) || sortedCheckIns[0] === toISODateString(yesterday)) {
-                currentStreak = 1;
-                for (let i = 0; i < sortedCheckIns.length - 1; i++) {
-                    const current = new Date(sortedCheckIns[i]);
-                    const previous = new Date(sortedCheckIns[i+1]);
-                    const diff = (current - previous) / (1000 * 60 * 60 * 24);
-                    if (diff === 1) {
-                        currentStreak++;
-                    } else {
-                        break; // 连续中断
-                    }
-                }
-            }
-        }
-        elements.currentStreak.textContent = currentStreak;
-
-        // 3. 更新最长连续天数
-        let bestStreak = localStorage.getItem(storageKeys.bestStreak) || 0;
-        if (currentStreak > bestStreak) {
-            bestStreak = currentStreak;
-            localStorage.setItem(storageKeys.bestStreak, bestStreak);
-        }
-        elements.bestStreak.textContent = bestStreak;
-    };
-
-    /**
-     * 渲染日历
-     */
-    const renderCalendar = () => {
-        elements.calendarGrid.innerHTML = ''; // 清空日历
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-
-        elements.calendarMonthYear.textContent = `${year}年 ${month + 1}月`;
-
-        // 渲染星期几的表头
-        ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
-            const dayNameEl = document.createElement('div');
-            dayNameEl.className = 'day-name';
-            dayNameEl.textContent = day;
-            elements.calendarGrid.appendChild(dayNameEl);
-        });
-
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        // 填充月初的空白格子
-        for (let i = 0; i < firstDayOfMonth; i++) {
-            elements.calendarGrid.appendChild(document.createElement('div'));
-        }
-
-        // 填充日期格子
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dayCell = document.createElement('div');
-            dayCell.className = 'day-cell';
-            dayCell.textContent = day;
-            
-            const cellDateStr = toISODateString(new Date(year, month, day));
-            const todayStr = toISODateString(new Date());
-
-            if (cellDateStr === todayStr) {
-                dayCell.classList.add('today');
-            }
-            if (checkIns.includes(cellDateStr)) {
-                dayCell.classList.add('checked-in');
-            }
-            elements.calendarGrid.appendChild(dayCell);
-        }
-    };
-
-    /**
-     * 更新打卡按钮的状态
-     */
-    const updateCheckInButton = () => {
-        const todayStr = toISODateString(new Date());
-        if (checkIns.includes(todayStr)) {
-            elements.checkInBtn.textContent = '今日已打卡';
-            elements.checkInBtn.disabled = true;
-        } else {
-            elements.checkInBtn.textContent = '今日打卡';
-            elements.checkInBtn.disabled = false;
-        }
-    };
-
-    /**
-     * 更新整个UI
-     */
+    // --- UI 更新 ---
     const updateUI = () => {
         updateStats();
         renderCalendar();
-        updateCheckInButton();
+        updateLogButton();
+        document.getElementById('quote').textContent = `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
+    };
+
+    const updateStats = () => {
+        const dates = Object.keys(state.checkIns).sort();
+        const successCount = dates.filter(d => state.checkIns[d].status === 'success').length;
+        const totalCount = dates.length;
+        
+        document.getElementById('total-success-days').textContent = successCount;
+        document.getElementById('success-rate').textContent = totalCount > 0 ? ((successCount / totalCount) * 100).toFixed(0) : 0;
+        
+        // 计算连胜
+        let currentStreak = 0;
+        const reversedDates = dates.reverse();
+        for (const dateStr of reversedDates) {
+            if (state.checkIns[dateStr].status === 'success') {
+                const current = new Date(dateStr);
+                const previousDate = new Date(current);
+                previousDate.setDate(current.getDate() - 1);
+                const previousDateStr = toISODateString(previousDate);
+                if (reversedDates.includes(previousDateStr) && state.checkIns[previousDateStr].status === 'success') {
+                     if (currentStreak === 0) currentStreak = 2; else currentStreak++;
+                } else {
+                    if (currentStreak === 0) currentStreak = 1;
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        
+        document.getElementById('current-streak').textContent = currentStreak;
+        if (currentStreak > state.bestStreak) state.bestStreak = currentStreak;
+        document.getElementById('best-streak').textContent = state.bestStreak;
+    };
+
+    const renderCalendar = () => {
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        document.getElementById('calendar-month-year').textContent = `${year}年 ${month + 1}月`;
+        
+        ['日','一','二','三','四','五','六'].forEach(d => grid.innerHTML += `<div class="day-name">${d}</div>`);
+        const firstDay = new Date(year, month, 1).getDay();
+        for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div class="empty"></div>`;
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        for (let day = 1; day <= daysInMonth; day++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-cell';
+            cell.textContent = day;
+            const dateStr = toISODateString(new Date(year, month, day));
+            cell.dataset.date = dateStr;
+            if (dateStr === toISODateString(new Date())) cell.classList.add('today');
+            
+            const record = state.checkIns[dateStr];
+            if (record) {
+                cell.classList.add(record.status); // 'success' or 'failure'
+                if (record.note) cell.classList.add('has-note');
+            }
+            grid.appendChild(cell);
+        }
+    };
+    
+    const updateLogButton = () => {
+        const btn = document.getElementById('log-day-btn');
+        btn.disabled = !!state.checkIns[toISODateString(new Date())];
+    };
+
+    // --- 特效 ---
+    const triggerConfetti = () => confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    const shakeModal = (modal) => {
+        modal.classList.add('shake');
+        setTimeout(() => modal.classList.remove('shake'), 820);
+    };
+    
+    // --- 弹窗逻辑 ---
+    const openModal = (id) => document.getElementById(id).classList.remove('hidden');
+    const closeModal = (id) => document.getElementById(id).classList.add('hidden');
+
+    const handleLogDay = (status) => {
+        modalTarget = { date: toISODateString(new Date()), status };
+        closeModal('choice-modal');
+        document.getElementById('modal-title').textContent = status === 'success' ? '记录一次成功 ✨' : '反思一次失败 🤔';
+        document.getElementById('note-textarea').value = '';
+        openModal('note-modal');
     };
 
     // --- 事件监听 ---
+    const addEventListeners = () => {
+        document.getElementById('log-day-btn').addEventListener('click', () => openModal('choice-modal'));
+        document.getElementById('success-btn').addEventListener('click', () => handleLogDay('success'));
+        document.getElementById('failure-btn').addEventListener('click', () => {
+             shakeModal(document.querySelector('#choice-modal .modal-content'));
+             setTimeout(() => handleLogDay('failure'), 200);
+        });
 
-    // 打卡按钮
-    elements.checkInBtn.addEventListener('click', () => {
-        const todayStr = toISODateString(new Date());
-        if (!checkIns.includes(todayStr)) {
-            checkIns.push(todayStr);
-            saveData();
+        document.getElementById('save-note-btn').addEventListener('click', () => {
+            const { date, status } = modalTarget;
+            state.checkIns[date] = {
+                status: status,
+                note: document.getElementById('note-textarea').value
+            };
+            if (status === 'success') triggerConfetti();
+            closeModal('note-modal');
             updateUI();
-        }
-    });
+            saveState();
+        });
 
-    // 上个月
-    elements.prevMonthBtn.addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
-    });
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(btn.dataset.modalId));
+        });
+        
+        document.getElementById('calendar-grid').addEventListener('click', (e) => {
+            const target = e.target.closest('.day-cell');
+            if (target && target.dataset.date) {
+                const record = state.checkIns[target.dataset.date];
+                if (record) {
+                    modalTarget = { date: target.dataset.date, status: record.status };
+                    document.getElementById('modal-title').textContent = `查看 ${target.dataset.date}`;
+                    document.getElementById('note-textarea').value = record.note;
+                    openModal('note-modal');
+                }
+            }
+        });
 
-    // 下个月
-    elements.nextMonthBtn.addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
-    });
+        // 月份导航、主题切换、数据导入导出（与上一版类似，但确保稳定）
+        document.getElementById('prev-month-btn').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
+        document.getElementById('next-month-btn').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
 
-    // 重置数据
-    elements.resetDataBtn.addEventListener('click', () => {
-        if (confirm('警告：这将清除您所有的打卡记录和最长连续记录。确定要重置吗？')) {
-            checkIns = [];
-            localStorage.removeItem(storageKeys.checkIns);
-            localStorage.removeItem(storageKeys.bestStreak);
-            updateUI();
-        }
-    });
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('change', () => {
+            const theme = themeToggle.checked ? 'dark' : 'light';
+            document.documentElement.dataset.theme = theme;
+            localStorage.setItem(storageKeys.theme, theme);
+        });
+        
+        document.getElementById('export-btn').addEventListener('click', () => {
+            const dataStr = JSON.stringify(state, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `行动日志Vivid_备份_${toISODateString(new Date())}.json`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
 
-    // --- 初始化 ---
-    updateUI();
+        const importFile = document.getElementById('import-file');
+        document.getElementById('import-btn').addEventListener('click', () => importFile.click());
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedState = JSON.parse(event.target.result);
+                    if (importedState.checkIns && typeof importedState.bestStreak !== 'undefined') {
+                        state = importedState;
+                        saveState(); updateUI(); alert('数据导入成功！');
+                    } else { alert('文件格式无效！'); }
+                } catch { alert('导入失败，文件内容可能已损坏。'); }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+    };
+
+    const initTheme = () => {
+        const savedTheme = localStorage.getItem(storageKeys.theme) || 'light';
+        document.documentElement.dataset.theme = savedTheme;
+        document.getElementById('theme-toggle').checked = savedTheme === 'dark';
+    };
+    
+    // 全局引用
+    const quotes = [ "伟大的事业，不是靠力量，而是靠坚持来完成的。", "每天的涓滴之水，终将磨损坚硬的磐石。", "自律的代价是痛苦，不自律的代价是更大的痛苦。", "你当像鸟飞往你的山。", "种一棵树最好的时间是十年前，其次是现在。", "千里之行，始于足下。" ];
+
+    // 启动 App
+    init();
 });
