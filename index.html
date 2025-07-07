@@ -3,66 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>修行之路 | 戒色追踪器</title>
+    <title>每日打卡 | 行动追踪器</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="particles-js"></div>
     <div class="container">
         <header>
-            <h1>修行之路</h1>
-            <p class="subtitle">保持正念，掌控自我</p>
+            <h1>我的行动日志</h1>
+            <p class="subtitle" id="quote">"千里之行，始于足下。"</p>
         </header>
         
         <main>
-            <div class="card" id="timer-card">
-                <h2>当前坚持时间</h2>
-                <div id="timer">
-                    <div class="time-unit">
-                        <span id="days">00</span>
-                        <label>天</label>
-                    </div>
-                    <div class="time-unit">
-                        <span id="hours">00</span>
-                        <label>时</label>
-                    </div>
-                    <div class="time-unit">
-                        <span id="minutes">00</span>
-                        <label>分</label>
-                    </div>
-                    <div class="time-unit">
-                        <span id="seconds">00</span>
-                        <label>秒</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card" id="stats-card">
+            <div class="stats-grid">
                 <div class="stat-item">
-                    <h3>当前等级</h3>
-                    <p id="level">尚未开始</p>
+                    <h3>总打卡天数</h3>
+                    <p id="total-days">0</p>
                 </div>
                 <div class="stat-item">
-                    <h3>最佳纪录</h3>
-                    <p id="best-streak">0 天 0 小时 0 分钟</p>
+                    <h3>当前连续</h3>
+                    <p id="current-streak">0</p>
+                </div>
+                <div class="stat-item">
+                    <h3>最长连续</h3>
+                    <p id="best-streak">0</p>
                 </div>
             </div>
 
             <div class="actions">
-                <button id="start-btn">开始新的征程</button>
-                <button id="reset-btn" class="hidden">我需要重置</button>
+                <button id="check-in-btn">今日打卡</button>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button id="prev-month-btn">&lt;</button>
+                    <h2 id="calendar-month-year"></h2>
+                    <button id="next-month-btn">&gt;</button>
+                </div>
+                <div class="calendar-grid" id="calendar-grid">
+                    </div>
             </div>
         </main>
 
         <footer>
-            <p id="quote">"最大的胜利，是战胜自己。"</p>
+            <button id="reset-data-btn">重置所有数据</button>
         </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
