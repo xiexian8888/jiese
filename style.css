@@ -1,18 +1,19 @@
-/* --- 全局样式 --- */
 :root {
-    --bg-color: #121828;
-    --card-bg-color: rgba(255, 255, 255, 0.07);
-    --primary-text-color: #ffffff;
-    --secondary-text-color: #a9c1d9;
-    --accent-color: #00aaff;
-    --danger-color: #ff4d4d;
+    --bg-color: #1a1a2e;
+    --container-bg: #16213e;
+    --card-bg: #0f3460;
+    --primary-text: #e94560;
+    --secondary-text: #c0c0c0;
+    --accent-color: #53a8b6;
+    --today-color: #e94560;
+    --checked-in-color: #53a8b6;
     --font-family: 'Noto Sans SC', sans-serif;
 }
 
 body {
     font-family: var(--font-family);
     background-color: var(--bg-color);
-    color: var(--primary-text-color);
+    color: var(--secondary-text);
     margin: 0;
     padding: 20px;
     display: flex;
@@ -20,188 +21,160 @@ body {
     align-items: center;
     min-height: 100vh;
     box-sizing: border-box;
-    overflow: hidden; /* 隐藏滚动条，因为背景是固定的 */
 }
 
-/* --- 动态粒子背景 --- */
-#particles-js {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    z-index: -1;
-}
-
-/* --- 主容器 --- */
 .container {
     text-align: center;
-    max-width: 600px;
+    max-width: 500px;
     width: 100%;
     padding: 30px;
-    background-color: rgba(0,0,0,0.3);
-    backdrop-filter: blur(10px);
+    background-color: var(--container-bg);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    z-index: 1;
 }
 
-/* --- 头部 --- */
 header h1 {
-    font-size: 2.8rem;
+    font-size: 2.5rem;
     font-weight: 700;
-    color: var(--primary-text-color);
+    color: var(--primary-text);
     margin: 0;
-    letter-spacing: 2px;
 }
 
 header .subtitle {
     font-size: 1.1rem;
-    color: var(--secondary-text-color);
     margin-top: 5px;
-    font-weight: 300;
+    font-style: italic;
 }
 
-/* --- 卡片样式 --- */
-.card {
-    background-color: var(--card-bg-color);
-    border-radius: 15px;
-    padding: 25px;
-    margin-top: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.card h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    color: var(--secondary-text-color);
-    font-weight: 400;
-}
-
-/* --- 计时器 --- */
-#timer {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-}
-
-.time-unit {
-    display: flex;
-    flex-direction: column;
-}
-
-.time-unit span {
-    font-size: 3.5rem;
-    font-weight: 700;
-    color: var(--accent-color);
-    line-height: 1;
-}
-
-.time-unit label {
-    font-size: 1rem;
-    color: var(--secondary-text-color);
-    margin-top: 5px;
-}
-
-/* --- 统计数据卡片 --- */
-#stats-card {
-    display: flex;
-    justify-content: space-around;
-    padding: 20px;
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin: 30px 0;
 }
 
 .stat-item {
-    flex: 1;
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 10px;
 }
 
 .stat-item h3 {
-    margin: 0;
-    font-size: 1rem;
-    color: var(--secondary-text-color);
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
     font-weight: 400;
+    color: var(--secondary-text);
 }
 
 .stat-item p {
-    margin: 5px 0 0 0;
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.actions {
+    margin-bottom: 30px;
+}
+
+#check-in-btn {
+    width: 100%;
+    padding: 15px;
     font-size: 1.2rem;
     font-weight: 700;
-    color: var(--primary-text-color);
-}
-
-
-/* --- 操作按钮 --- */
-.actions {
-    margin-top: 30px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-}
-
-button {
-    padding: 12px 25px;
-    font-size: 1rem;
     font-family: var(--font-family);
+    color: #fff;
+    background-color: var(--accent-color);
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+#check-in-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(83, 168, 182, 0.4);
+}
+
+#check-in-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    color: #999;
+}
+
+.calendar-container {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.calendar-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.calendar-header button {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-grid div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 35px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+.day-name {
+    font-weight: 700;
+    color: var(--secondary-text);
+}
+
+.day-cell {
+    background-color: rgba(255,255,255,0.05);
+    cursor: default;
+}
+
+.day-cell.today {
+    border: 2px solid var(--today-color);
+}
+
+.day-cell.checked-in {
+    background-color: var(--checked-in-color);
+    color: #fff;
     font-weight: 700;
 }
 
-#start-btn {
-    background-color: var(--accent-color);
-    color: #fff;
-    box-shadow: 0 4px 15px rgba(0, 170, 255, 0.3);
-}
-
-#start-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 170, 255, 0.4);
-}
-
-#reset-btn {
-    background-color: transparent;
-    color: var(--danger-color);
-    border: 2px solid var(--danger-color);
-}
-
-#reset-btn:hover {
-    background-color: var(--danger-color);
-    color: #fff;
-}
-
-/* --- 底部 --- */
 footer {
-    margin-top: 30px;
+    margin-top: 20px;
 }
 
-#quote {
-    font-style: italic;
-    color: var(--secondary-text-color);
-    font-weight: 300;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* --- 响应式设计 --- */
-@media (max-width: 480px) {
-    .container {
-        padding: 20px;
-    }
-    header h1 {
-        font-size: 2.2rem;
-    }
-    .time-unit span {
-        font-size: 2.5rem;
-    }
-    #stats-card {
-        flex-direction: column;
-        gap: 20px;
-    }
-    .actions {
-        flex-direction: column;
-    }
+#reset-data-btn {
+    background: none;
+    border: 1px solid var(--primary-text);
+    color: var(--primary-text);
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8rem;
 }
