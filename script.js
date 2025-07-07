@@ -1,171 +1,185 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM 元素获取 ---
+    // --- DOM 元素 ---
     const elements = {
-        days: document.getElementById('days'),
-        hours: document.getElementById('hours'),
-        minutes: document.getElementById('minutes'),
-        seconds: document.getElementById('seconds'),
-        level: document.getElementById('level'),
-        bestStreak: document.getElementById('best-streak'),
         quote: document.getElementById('quote'),
-        startBtn: document.getElementById('start-btn'),
-        resetBtn: document.getElementById('reset-btn'),
-        timerCard: document.getElementById('timer-card'),
-        statsCard: document.getElementById('stats-card'),
+        totalDays: document.getElementById('total-days'),
+        currentStreak: document.getElementById('current-streak'),
+        bestStreak: document.getElementById('best-streak'),
+        checkInBtn: document.getElementById('check-in-btn'),
+        calendarMonthYear: document.getElementById('calendar-month-year'),
+        calendarGrid: document.getElementById('calendar-grid'),
+        prevMonthBtn: document.getElementById('prev-month-btn'),
+        nextMonthBtn: document.getElementById('next-month-btn'),
+        resetDataBtn: document.getElementById('reset-data-btn'),
     };
 
     // --- 状态与数据 ---
-    let timerInterval = null;
     const storageKeys = {
-        startTime: 'nofap_startTime',
-        bestStreak: 'nofap_bestStreak'
+        checkIns: 'checkInApp_checkIns',
+        bestStreak: 'checkInApp_bestStreak'
     };
-
-    const levels = [
-        { days: 0, name: "初窥门径" },
-        { days: 3, name: "渐入佳境" },
-        { days: 7, name: "脱胎换骨" },
-        { days: 14, name: "意志坚定" },
-        { days: 30, name: "心如止水" },
-        { days: 60, name: "掌控自我" },
-        { days: 90, name: "超凡入圣" },
-        { days: 180, name: "天人合一" },
-        { days: 365, name: "得道宗师" }
-    ];
-
-    const quotes = [
-        "最大的胜利，是战胜自己。",
-        "每一次克制，都是一次新生。",
-        "欲望如水，可载舟亦可覆舟，智者驭之。",
-        "正念长存，方能百邪不侵。",
-        "你的身体是圣殿，而非欲望的囚笼。",
-        "坚持住，你正在成为更强大的自己。"
-    ];
+    let checkIns = JSON.parse(localStorage.getItem(storageKeys.checkIns)) || [];
+    let currentDate = new Date(); // 用于日历导航
 
     // --- 功能函数 ---
 
     /**
-     * 更新计时器显示
+     * 将日期对象转换为 'YYYY-MM-DD' 格式的字符串
+     * @param {Date} date - 日期对象
+     * @returns {string}
      */
-    function updateTimer() {
-        const startTime = localStorage.getItem(storageKeys.startTime);
-        if (!startTime) return;
-
-        const diff = new Date().getTime() - startTime;
-        if (diff < 0) return;
-
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const s = Math.floor((diff % (1000 * 60)) / 1000);
-
-        elements.days.textContent = String(d).padStart(2, '0');
-        elements.hours.textContent = String(h).padStart(2, '0');
-        elements.minutes.textContent = String(m).padStart(2, '0');
-        elements.seconds.textContent = String(s).padStart(2, '0');
-        
-        updateLevel(d);
-    }
+    const toISODateString = (date) => date.toISOString().split('T')[0];
 
     /**
-     * 更新等级
-     * @param {number} currentDays - 当前坚持的天数
+     * 保存数据到 localStorage
      */
-    function updateLevel(currentDays) {
-        const currentLevel = levels.slice().reverse().find(l => currentDays >= l.days);
-        elements.level.textContent = currentLevel ? currentLevel.name : "尚未开始";
-    }
+    const saveData = () => {
+        localStorage.setItem(storageKeys.checkIns, JSON.stringify(checkIns));
+    };
 
     /**
-     * 更新最佳纪录显示
+     * 计算并更新统计数据
      */
-    function updateBestStreakDisplay() {
-        const best = localStorage.getItem(storageKeys.bestStreak) || 0;
-        const d = Math.floor(best / (1000 * 60 * 60 * 24));
-        const h = Math.floor((best % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const m = Math.floor((best % (1000 * 60 * 60)) / (1000 * 60));
-        elements.bestStreak.textContent = `${d} 天 ${h} 小时 ${m} 分钟`;
-    }
+    const updateStats = () => {
+        // 1. 总打卡天数
+        elements.totalDays.textContent = checkIns.length;
 
-    /**
-     * 检查并更新最佳纪录
-     */
-    function checkAndUpdateBestStreak() {
-        const startTime = localStorage.getItem(storageKeys.startTime);
-        if (!startTime) return;
-        
-        const currentStreak = new Date().getTime() - startTime;
-        const bestStreak = localStorage.getItem(storageKeys.bestStreak) || 0;
+        // 2. 计算连续天数
+        let currentStreak = 0;
+        if (checkIns.length > 0) {
+            const sortedCheckIns = [...checkIns].sort().reverse();
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
 
+            // 检查今天是否打卡，或者昨天是否打卡，以确定连续的起点
+            if (sortedCheckIns[0] === toISODateString(today) || sortedCheckIns[0] === toISODateString(yesterday)) {
+                currentStreak = 1;
+                for (let i = 0; i < sortedCheckIns.length - 1; i++) {
+                    const current = new Date(sortedCheckIns[i]);
+                    const previous = new Date(sortedCheckIns[i+1]);
+                    const diff = (current - previous) / (1000 * 60 * 60 * 24);
+                    if (diff === 1) {
+                        currentStreak++;
+                    } else {
+                        break; // 连续中断
+                    }
+                }
+            }
+        }
+        elements.currentStreak.textContent = currentStreak;
+
+        // 3. 更新最长连续天数
+        let bestStreak = localStorage.getItem(storageKeys.bestStreak) || 0;
         if (currentStreak > bestStreak) {
-            localStorage.setItem(storageKeys.bestStreak, currentStreak);
+            bestStreak = currentStreak;
+            localStorage.setItem(storageKeys.bestStreak, bestStreak);
         }
-    }
-    
+        elements.bestStreak.textContent = bestStreak;
+    };
+
     /**
-     * 更新UI状态
+     * 渲染日历
      */
-    function updateUI() {
-        const startTime = localStorage.getItem(storageKeys.startTime);
-        if (startTime) {
-            // 正在计时状态
-            elements.timerCard.classList.remove('hidden');
-            elements.statsCard.classList.remove('hidden');
-            elements.resetBtn.classList.remove('hidden');
-            elements.startBtn.classList.add('hidden');
-            updateTimer();
-            timerInterval = setInterval(updateTimer, 1000);
-            updateBestStreakDisplay();
-        } else {
-            // 初始或重置状态
-            elements.timerCard.classList.add('hidden');
-            elements.statsCard.classList.remove('hidden'); // 仍然显示最佳纪录
-            elements.resetBtn.classList.add('hidden');
-            elements.startBtn.classList.remove('hidden');
-            elements.level.textContent = "尚未开始";
-            updateBestStreakDisplay();
+    const renderCalendar = () => {
+        elements.calendarGrid.innerHTML = ''; // 清空日历
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        elements.calendarMonthYear.textContent = `${year}年 ${month + 1}月`;
+
+        // 渲染星期几的表头
+        ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
+            const dayNameEl = document.createElement('div');
+            dayNameEl.className = 'day-name';
+            dayNameEl.textContent = day;
+            elements.calendarGrid.appendChild(dayNameEl);
+        });
+
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // 填充月初的空白格子
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            elements.calendarGrid.appendChild(document.createElement('div'));
         }
-        // 随机更新一句引言
-        elements.quote.textContent = `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
-    }
+
+        // 填充日期格子
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayCell = document.createElement('div');
+            dayCell.className = 'day-cell';
+            dayCell.textContent = day;
+            
+            const cellDateStr = toISODateString(new Date(year, month, day));
+            const todayStr = toISODateString(new Date());
+
+            if (cellDateStr === todayStr) {
+                dayCell.classList.add('today');
+            }
+            if (checkIns.includes(cellDateStr)) {
+                dayCell.classList.add('checked-in');
+            }
+            elements.calendarGrid.appendChild(dayCell);
+        }
+    };
+
+    /**
+     * 更新打卡按钮的状态
+     */
+    const updateCheckInButton = () => {
+        const todayStr = toISODateString(new Date());
+        if (checkIns.includes(todayStr)) {
+            elements.checkInBtn.textContent = '今日已打卡';
+            elements.checkInBtn.disabled = true;
+        } else {
+            elements.checkInBtn.textContent = '今日打卡';
+            elements.checkInBtn.disabled = false;
+        }
+    };
+
+    /**
+     * 更新整个UI
+     */
+    const updateUI = () => {
+        updateStats();
+        renderCalendar();
+        updateCheckInButton();
+    };
 
     // --- 事件监听 ---
 
-    /**
-     * 开始按钮点击事件
-     */
-    elements.startBtn.addEventListener('click', () => {
-        const now = new Date().getTime();
-        localStorage.setItem(storageKeys.startTime, now);
-        if (timerInterval) clearInterval(timerInterval);
-        updateUI();
+    // 打卡按钮
+    elements.checkInBtn.addEventListener('click', () => {
+        const todayStr = toISODateString(new Date());
+        if (!checkIns.includes(todayStr)) {
+            checkIns.push(todayStr);
+            saveData();
+            updateUI();
+        }
     });
 
-    /**
-     * 重置按钮点击事件
-     */
-    elements.resetBtn.addEventListener('click', () => {
-        if (confirm('你确定要重置吗？这将结束本次挑战，但你的最佳纪录会被保留。')) {
-            checkAndUpdateBestStreak(); // 在重置前，最后检查一次是否创造了新纪录
-            localStorage.removeItem(storageKeys.startTime);
-            if (timerInterval) clearInterval(timerInterval);
-            // 清空计时器显示
-            elements.days.textContent = "00";
-            elements.hours.textContent = "00";
-            elements.minutes.textContent = "00";
-            elements.seconds.textContent = "00";
+    // 上个月
+    elements.prevMonthBtn.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+    });
+
+    // 下个月
+    elements.nextMonthBtn.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+    });
+
+    // 重置数据
+    elements.resetDataBtn.addEventListener('click', () => {
+        if (confirm('警告：这将清除您所有的打卡记录和最长连续记录。确定要重置吗？')) {
+            checkIns = [];
+            localStorage.removeItem(storageKeys.checkIns);
+            localStorage.removeItem(storageKeys.bestStreak);
             updateUI();
         }
     });
 
     // --- 初始化 ---
-    function initialize() {
-        updateUI();
-        // 初始化粒子背景
-        particlesJS("particles-js", {
-            "particles": { "number": { "value": 80, "density": { "enable": true, "value_area": 800 } }, "color": { "value": "#ffffff" }, "shape": { "type": "circle", "stroke": { "width": 0, "color": "#000000" }, "polygon": { "nb_sides": 5 }, "image": { "src": "img/github.svg", "width": 100, "height": 100 } }, "opacity": { "value": 0.5, "random": false, "anim": { "enable": false, "speed": 1, "opacity_min": 0.1, "sync": false } }, "size": { "value": 3, "random": true, "anim": { "enable": false, "speed": 40, "size_min": 0.1, "sync": false } }, "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1 }, "move": { "enable": true, "speed": 6, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false, "attract": { "enable": false, "rotateX": 600, "rotateY": 1200 } } }, "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }, "modes": { "grab": { "distance": 400, "line_linked": { "opacity": 1 } }, "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 }, "repulse": { "distance": 200, "duration": 0.4 }, "push": { "particles_nb": 4 }, "remove": { "particles_nb": 2 } } }, "retina_detect": true
-        });
-    }
-
-    initialize();
+    updateUI();
 });
