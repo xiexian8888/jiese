@@ -1,57 +1,85 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日打卡 | 行动追踪器</title>
+    <title>行动日志 Vivid | 清新记录每一天</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
+
+    <div id="preloader">
+        <div class="spinner"></div>
+    </div>
+
     <div class="container">
         <header>
-            <h1>我的行动日志</h1>
-            <p class="subtitle" id="quote">"千里之行，始于足下。"</p>
+            <div class="title-bar">
+                <i class="ph-bold ph-leaf"></i>
+                <h1>行动日志 Vivid</h1>
+            </div>
+            <div class="theme-switcher">
+                <i class="ph ph-sun"></i>
+                <label class="switch"><input type="checkbox" id="theme-toggle"><span class="slider"></span></label>
+                <i class="ph ph-moon"></i>
+            </div>
         </header>
+        <p class="subtitle" id="quote">"每一次呼吸，都是新的开始。"</p>
         
         <main>
             <div class="stats-grid">
-                <div class="stat-item">
-                    <h3>总打卡天数</h3>
-                    <p id="total-days">0</p>
-                </div>
-                <div class="stat-item">
-                    <h3>当前连续</h3>
-                    <p id="current-streak">0</p>
-                </div>
-                <div class="stat-item">
-                    <h3>最长连续</h3>
-                    <p id="best-streak">0</p>
-                </div>
+                <div class="stat-item"><h3>成功天数</h3><p><i class="ph-fill ph-check-circle"></i> <span id="total-success-days">0</span></p></div>
+                <div class="stat-item"><h3>成功率</h3><p><i class="ph-fill ph-chart-pie-slice"></i> <span id="success-rate">0</span>%</p></div>
+                <div class="stat-item"><h3>当前连胜</h3><p><i class="ph-fill ph-fire"></i> <span id="current-streak">0</span></p></div>
+                <div class="stat-item"><h3>最长连胜</h3><p><i class="ph-fill ph-trophy"></i> <span id="best-streak">0</span></p></div>
             </div>
 
             <div class="actions">
-                <button id="check-in-btn">今日打卡</button>
+                <button id="log-day-btn"><i class="ph-bold ph-calendar-plus"></i> 记录今天</button>
             </div>
 
             <div class="calendar-container">
                 <div class="calendar-header">
-                    <button id="prev-month-btn">&lt;</button>
+                    <button id="prev-month-btn"><i class="ph ph-caret-left"></i></button>
                     <h2 id="calendar-month-year"></h2>
-                    <button id="next-month-btn">&gt;</button>
+                    <button id="next-month-btn"><i class="ph ph-caret-right"></i></button>
                 </div>
-                <div class="calendar-grid" id="calendar-grid">
-                    </div>
+                <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+            
+            <div class="data-management">
+                <button id="export-btn"><i class="ph ph-download-simple"></i> 导出</button>
+                <button id="import-btn"><i class="ph ph-upload-simple"></i> 导入</button>
+                <input type="file" id="import-file" accept=".json" style="display: none;">
             </div>
         </main>
-
-        <footer>
-            <button id="reset-data-btn">重置所有数据</button>
-        </footer>
     </div>
 
-    <script src="script.js"></script>
+    <div id="choice-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>今天表现如何？</h3>
+            <div class="choice-actions">
+                <button id="success-btn"><i class="ph-fill ph-check-circle"></i> 成功</button>
+                <button id="failure-btn"><i class="ph-fill ph-x-circle"></i> 失败</button>
+            </div>
+            <button class="close-btn" data-modal-id="choice-modal"><i class="ph ph-x"></i></button>
+        </div>
+    </div>
+
+    <div id="note-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modal-title">记录一下</h3>
+            <textarea id="note-textarea" placeholder="是什么让你成功，又是什么导致了失败？记录下来，下次做得更好..."></textarea>
+            <div class="modal-actions">
+                <button id="save-note-btn">保存记录</button>
+            </div>
+            <button class="close-btn" data-modal-id="note-modal"><i class="ph ph-x"></i></button>
+        </div>
+    </div>
 </body>
 </html>
